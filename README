@@ -1,0 +1,30 @@
+A simple bullseye trainer.
+
+Required libraries:
+  SDL
+  SDL_TTF
+  SDL_DRAW
+
+Usage:
+  When ran, at the upper left corner is displayed bandit's bullseye information.
+  At the bottom left corner is displayed your own bullseye information.
+  At the center of the screen is the bullseye graph which may help you at the beginning.
+
+  Your "mission" is to rotate your aircraft towards the bandit using the information available.
+
+  To turn your aircraft left use the left arrow key and to turn right use the right arrow key.
+  When you think you got the right bearing, press space.
+
+  When you press space following stuff gets drawn:
+    - Your location and bearing (blue/cyan cross and arrow)
+    - Bandit's location
+
+  Using the new information, you see how close you got to the right bearing.
+
+  That's it, press space to start over again with a new situation.
+
+
+Copyright Information:
+  Public Domain and that stuff alright?
+  You're free to use the code as you want.
+
