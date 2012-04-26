@@ -18,9 +18,11 @@ DBGTGT = dbullseye
 
 
 OBJS = $(OBJDIR)/vector.o \
+       $(OBJDIR)/messagebox.o \
        $(OBJDIR)/main.o
 
 DBGOBJS = $(OBJDIR)/vector.dbg.o \
+	  $(OBJDIR)/messagebox.dbg.o \
 	  $(OBJDIR)/main.dbg.o
 
 
