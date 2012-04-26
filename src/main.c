@@ -5,10 +5,22 @@
 #define DEPTH 32
 #define BPP 6
 
+#define MARKERSIZE 40
+#define MARKERX 60
+#define MARKERY HEIGHT-70
+
 sPlane plane = { 35, 0, 90 };
 sPlane bandit = { 0, 0, 0 };
 
 sMessageBox msgBox;
+
+enum GameState
+{
+  GAME,
+  DEBRIEFING
+};
+
+enum GameState gameState = GAME;
 
 
 void DrawText( SDL_Surface *surface, TTF_Font *font, int x, int y, char *text, SDL_Color *textColor, int centered )
@@ -49,6 +61,11 @@ void DrawPlane( SDL_Surface *screen, sPlane *plane, unsigned int color )
   sVector planeLocVector = RotateVector( planeVector, plane->bearing );
 
   sVector planeTailVector = { 0, -10 };
+  if( gameState == DEBRIEFING )
+  {
+    planeTailVector.y = -40*ratio;
+  }
+
   sVector planeTailLocVector = RotateVector( planeTailVector, plane->heading );
   sVector planeArr1Vector = { 0, -5 };
   sVector planeArr1LocVector = RotateVector( planeArr1Vector, plane->heading-45 );
@@ -78,6 +95,29 @@ void DrawPlane( SDL_Surface *screen, sPlane *plane, unsigned int color )
             color );
 }
 
+void DrawCross( SDL_Surface *screen, sPlane *plane, unsigned int color )
+{
+  int centerX=WIDTH/2,
+      centerY=HEIGHT/2;
+
+  float ratio = (float)HEIGHT/200;
+
+  sVector planeVector = { 0, plane->distance * ratio };
+  sVector planeLocVector = RotateVector( planeVector, plane->bearing );
+
+  Draw_Line( screen,
+            centerX-planeLocVector.x-5,
+            centerY-planeLocVector.y-5,
+            centerX-planeLocVector.x+5,
+            centerY-planeLocVector.y+5,
+            color );
+  Draw_Line( screen,
+            centerX-planeLocVector.x+5,
+            centerY-planeLocVector.y-5,
+            centerX-planeLocVector.x-5,
+            centerY-planeLocVector.y+5,
+            color );
+}
 
 void DrawBullseyeMap( SDL_Surface *screen, TTF_Font *font )
 {
@@ -104,8 +144,12 @@ void DrawBullseyeMap( SDL_Surface *screen, TTF_Font *font )
   DrawText( screen, font, centerX, centerY-ratio*90, "000", &textColor, 1 );
   DrawText( screen, font, centerX, centerY+ratio*90, "180", &textColor, 1 );
 
-  DrawPlane( screen, &plane, 0xff00ffff );
-  DrawPlane( screen, &bandit, 0xffff0000 );
+  if( gameState == DEBRIEFING )
+  {
+    DrawPlane( screen, &plane, 0xff00ffff );
+    DrawCross( screen, &plane, 0xff00ffff );
+    DrawCross( screen, &bandit, 0xffff0000 );
+  }
 }
 
 
@@ -117,7 +161,7 @@ void DrawBullseyeMarker( SDL_Surface *screen, TTF_Font *font )
   // DRAW NAUTICAL MILES TEXT
   char nmBuf[4];
   sprintf( nmBuf, "%d", (int)plane.distance );
-  DrawText( screen, font, 30, HEIGHT-40, nmBuf, &textColor, 1 );
+  DrawText( screen, font, MARKERX, MARKERY, nmBuf, &textColor, 1 );
 
   // DRAW BEARING TEXT
   char bearBuf[4];
@@ -136,15 +180,15 @@ void DrawBullseyeMarker( SDL_Surface *screen, TTF_Font *font )
     bearBuf[1] = bearBuf[0];
     bearBuf[0] = '0';
   }
-  DrawText( screen, font, 30, HEIGHT-10, bearBuf, &textColor, 1 );
+  DrawText( screen, font, MARKERX, MARKERY+MARKERSIZE/2+30, bearBuf, &textColor, 1 );
 
   // DRAW CIRCLE
-  Draw_Circle( screen, 30, HEIGHT-40, 20, 0xff00ff00 );
+  Draw_Circle( screen, MARKERX, MARKERY, MARKERSIZE, 0xff00ff00 );
 
   // DRAW BULLSEYE POINTER
-  sVector pointer = { 0, 20 };
+  sVector pointer = { 0, MARKERSIZE+1 };
   sVector pointerLoc = RotateVector( pointer, -plane.heading+plane.bearing );
-  Draw_FillCircle( screen, 30+pointerLoc.x, HEIGHT-40+pointerLoc.y, 2, 0xff00ff00 );
+  Draw_FillCircle( screen, MARKERX+pointerLoc.x, MARKERY+pointerLoc.y, 3, 0xff00ff00 );
 }
 
 
@@ -159,6 +203,7 @@ void DrawScreen( SDL_Surface *screen, TTF_Font *font )
 
   SDL_Flip( screen ); 
 }
+
 
 char *FormatBearing( int bearing )
 {
@@ -201,8 +246,20 @@ void GenerateNewScenario()
 
   char *banditBearing = FormatBearing( bandit.bearing );
   sprintf( msgBox.lines[0], "Bandit %s %d hot!", banditBearing, (int)bandit.distance );
-  sprintf( msgBox.lines[1], "Point where he is and head towards him." );
+  sprintf( msgBox.lines[1], "Head your plane towards the bandit." );
   free( banditBearing );
+}
+
+
+void UpdateGameState()
+{
+  if( gameState == GAME )
+    gameState = DEBRIEFING;
+  else
+  {
+    GenerateNewScenario();
+    gameState = GAME;
+  }
 }
 
 
@@ -264,7 +321,7 @@ int main( int argc, char* argv[] )
               break;
 
             case( SDLK_SPACE ):
-              GenerateNewScenario();
+              UpdateGameState();
               break;
 
             case( SDLK_ESCAPE ):
